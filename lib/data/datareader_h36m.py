@@ -9,13 +9,13 @@ from lib.utils.utils_data import split_clips
 random.seed(0)
     
 class DataReaderH36M(object):
-    def __init__(self, n_frames, sample_stride, data_stride_train, data_stride_test, read_confidence=True, dt_root = 'data/motion3d', dt_file = 'h36m_cpn_cam_source.pkl'):
+    def __init__(self, n_frames, sample_stride, data_stride_train, data_stride_test, read_confidence=True, dt_path='data/motion3d/h36m_cpn_cam_source.pkl'):
         self.gt_trainset = None
         self.gt_testset = None
         self.split_id_train = None
         self.split_id_test = None
         self.test_hw = None
-        self.dt_dataset = read_pkl('%s/%s' % (dt_root, dt_file))
+        self.dt_dataset = read_pkl(dt_path)
         self.n_frames = n_frames
         self.sample_stride = sample_stride
         self.data_stride_train = data_stride_train

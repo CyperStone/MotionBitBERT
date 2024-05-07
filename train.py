@@ -29,6 +29,8 @@ from lib.model.loss import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="configs/pretrain.yaml", help="Path to the config file.")
+    parser.add_argument("--data_root", type=str, default="", help="Path to processed input data.")
+    parser.add_argument("--dt_path", type=str, default="", help="Path to raw input data.")
     parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH', help='checkpoint directory')
     parser.add_argument('-p', '--pretrained', default='checkpoint', type=str, metavar='PATH', help='pretrained checkpoint directory')
     parser.add_argument('-r', '--resume', default='', type=str, metavar='FILENAME', help='checkpoint to resume (file name)')
@@ -234,8 +236,8 @@ def train_with_config(args, opts):
           'persistent_workers': True
     }
 
-    train_dataset = MotionDataset3D(args, args.subset_list, 'train')
-    test_dataset = MotionDataset3D(args, args.subset_list, 'test')
+    train_dataset = MotionDataset3D(args, opts.data_root, args.subset_list, 'train')
+    test_dataset = MotionDataset3D(args, opts.data_root, args.subset_list, 'test')
     train_loader_3d = DataLoader(train_dataset, **trainloader_params)
     test_loader = DataLoader(test_dataset, **testloader_params)
     
@@ -245,7 +247,7 @@ def train_with_config(args, opts):
         instav = InstaVDataset2D()
         instav_loader_2d = DataLoader(instav, **trainloader_params)
         
-    datareader = DataReaderH36M(n_frames=args.clip_len, sample_stride=args.sample_stride, data_stride_train=args.data_stride, data_stride_test=args.clip_len, dt_root = 'data/motion3d', dt_file=args.dt_file)
+    datareader = DataReaderH36M(n_frames=args.clip_len, sample_stride=args.sample_stride, data_stride_train=args.data_stride, data_stride_test=args.clip_len, dt_path=opts.dt_path)
     min_loss = 100000
     model_backbone = load_backbone(args)
     model_params = 0

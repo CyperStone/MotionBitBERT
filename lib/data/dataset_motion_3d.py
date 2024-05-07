@@ -11,9 +11,9 @@ from lib.utils.tools import read_pkl
 from lib.utils.utils_data import flip_data
     
 class MotionDataset(Dataset):
-    def __init__(self, args, subset_list, data_split): # data_split: train/test
+    def __init__(self, data_root, subset_list, data_split): # data_split: train/test
         np.random.seed(0)
-        self.data_root = args.data_root
+        self.data_root = data_root
         self.subset_list = subset_list
         self.data_split = data_split
         file_list_all = []
@@ -32,8 +32,8 @@ class MotionDataset(Dataset):
         raise NotImplementedError 
 
 class MotionDataset3D(MotionDataset):
-    def __init__(self, args, subset_list, data_split):
-        super(MotionDataset3D, self).__init__(args, subset_list, data_split)
+    def __init__(self, args, data_root, subset_list, data_split):
+        super(MotionDataset3D, self).__init__(data_root, subset_list, data_split)
         self.flip = args.flip
         self.synthetic = args.synthetic
         self.aug = Augmenter3D(args)
