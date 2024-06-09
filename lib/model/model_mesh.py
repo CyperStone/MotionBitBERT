@@ -5,21 +5,22 @@ import torch.nn.functional as F
 import numpy as np
 from lib.utils.utils_smpl import SMPL
 from lib.utils.utils_mesh import rotation_matrix_to_angle_axis, rot6d_to_rotmat
+from bitnet import BitLinear
 
 class SMPLRegressor(nn.Module):
     def __init__(self, args, dim_rep=512, num_joints=17, hidden_dim=2048, dropout_ratio=0.):
         super(SMPLRegressor, self).__init__()
         param_pose_dim = 24 * 6
         self.dropout = nn.Dropout(p=dropout_ratio)
-        self.fc1 = nn.Linear(num_joints*dim_rep, hidden_dim)
+        self.fc1 = BitLinear(num_joints*dim_rep, hidden_dim)
         self.pool2 = nn.AdaptiveAvgPool2d((None, 1))
-        self.fc2 = nn.Linear(num_joints*dim_rep, hidden_dim)
+        self.fc2 = BitLinear(num_joints*dim_rep, hidden_dim)
         self.bn1 = nn.BatchNorm1d(hidden_dim, momentum=0.1)
         self.bn2 = nn.BatchNorm1d(hidden_dim, momentum=0.1)
         self.relu1 = nn.ReLU(inplace=True)
         self.relu2 = nn.ReLU(inplace=True)
-        self.head_pose = nn.Linear(hidden_dim, param_pose_dim)
-        self.head_shape = nn.Linear(hidden_dim, 10)
+        self.head_pose = BitLinear(hidden_dim, param_pose_dim)
+        self.head_shape = BitLinear(hidden_dim, 10)
         nn.init.xavier_uniform_(self.head_pose.weight, gain=0.01)
         nn.init.xavier_uniform_(self.head_shape.weight, gain=0.01)
         self.smpl = SMPL(

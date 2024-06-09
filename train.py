@@ -208,6 +208,9 @@ def train_epoch(args, model_pos, train_loader, losses, optimizer, has_3d, has_gt
         optimizer.step()
 
 def train_with_config(args, opts):
+    print(f"Is CUDA available: {torch.cuda.is_available()}")
+    print(f"CUDA device name: {torch.cuda.get_device_name(0)}")
+
     print(args)
     try:
         os.makedirs(opts.checkpoint)

@@ -8,6 +8,7 @@ from collections import OrderedDict
 from functools import partial
 from itertools import repeat
 from lib.model.drop import DropPath
+from bitnet import BitLinear
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Cut & paste from PyTorch official master until it's in a few official releases - RW
@@ -71,9 +72,9 @@ class MLP(nn.Module):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
-        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.fc1 = BitLinear(in_features, hidden_features)
         self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_features, out_features)
+        self.fc2 = BitLinear(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
 
     def forward(self, x):
@@ -94,13 +95,13 @@ class Attention(nn.Module):
         self.scale = qk_scale or head_dim ** -0.5
 
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim)
+        self.proj = BitLinear(dim, dim)
         self.mode = st_mode
         if self.mode == 'parallel':
-            self.ts_attn = nn.Linear(dim*2, dim*2)
-            self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+            self.ts_attn = BitLinear(dim*2, dim*2)
+            self.qkv = BitLinear(dim, dim * 3, bias=qkv_bias)
         else:
-            self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+            self.qkv = BitLinear(dim, dim * 3, bias=qkv_bias)
         self.proj_drop = nn.Dropout(proj_drop)
 
         self.attn_count_s = None
@@ -235,7 +236,7 @@ class Block(nn.Module):
         self.mlp_t = MLP(in_features=dim, hidden_features=mlp_hidden_dim, out_features=mlp_out_dim, act_layer=act_layer, drop=drop)
         self.att_fuse = att_fuse
         if self.att_fuse:
-            self.ts_attn = nn.Linear(dim*2, dim*2)
+            self.ts_attn = BitLinear(dim*2, dim*2)
     def forward(self, x, seqlen=1):
         if self.st_mode=='stage_st':
             x = x + self.drop_path(self.attn_s(self.norm1_s(x), seqlen))
@@ -274,7 +275,7 @@ class DSTformer(nn.Module):
         super().__init__()
         self.dim_out = dim_out
         self.dim_feat = dim_feat
-        self.joints_embed = nn.Linear(dim_in, dim_feat)
+        self.joints_embed = BitLinear(dim_in, dim_feat)
         self.pos_drop = nn.Dropout(p=drop_rate)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks_st = nn.ModuleList([
@@ -292,12 +293,12 @@ class DSTformer(nn.Module):
         self.norm = norm_layer(dim_feat)
         if dim_rep:
             self.pre_logits = nn.Sequential(OrderedDict([
-                ('fc', nn.Linear(dim_feat, dim_rep)),
+                ('fc', BitLinear(dim_feat, dim_rep)),
                 ('act', nn.Tanh())
             ]))
         else:
             self.pre_logits = nn.Identity()
-        self.head = nn.Linear(dim_rep, dim_out) if dim_out > 0 else nn.Identity()            
+        self.head = BitLinear(dim_rep, dim_out) if dim_out > 0 else nn.Identity()
         self.temp_embed = nn.Parameter(torch.zeros(1, maxlen, 1, dim_feat))
         self.pos_embed = nn.Parameter(torch.zeros(1, num_joints, dim_feat))
         trunc_normal_(self.temp_embed, std=.02)
@@ -305,15 +306,15 @@ class DSTformer(nn.Module):
         self.apply(self._init_weights)
         self.att_fuse = att_fuse
         if self.att_fuse:
-            self.ts_attn = nn.ModuleList([nn.Linear(dim_feat*2, 2) for i in range(depth)])
+            self.ts_attn = nn.ModuleList([BitLinear(dim_feat*2, 2) for i in range(depth)])
             for i in range(depth):
                 self.ts_attn[i].weight.data.fill_(0)
                 self.ts_attn[i].bias.data.fill_(0.5)
 
     def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
+        if isinstance(m, BitLinear):
             trunc_normal_(m.weight, std=.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
+            if isinstance(m, BitLinear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
@@ -324,7 +325,7 @@ class DSTformer(nn.Module):
 
     def reset_classifier(self, dim_out, global_pool=''):
         self.dim_out = dim_out
-        self.head = nn.Linear(self.dim_feat, dim_out) if dim_out > 0 else nn.Identity()
+        self.head = BitLinear(self.dim_feat, dim_out) if dim_out > 0 else nn.Identity()
 
     def forward(self, x, return_rep=False):   
         B, F, J, C = x.shape
