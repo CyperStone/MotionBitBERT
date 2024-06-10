@@ -36,6 +36,15 @@ def activation_quant(x, num_bits=8):
     return result.type(dtype)
 
 
+def bitnet_quantization(model):
+    for name, module in model.named_children():
+        if hasattr(module, "post_process_weights"):
+            print("Post processing weights for module", name)
+            module.post_process_weights()
+        else:
+            bitnet_quantization(module)
+
+
 # BitBLAS BitLinear
 class BitLinear(nn.Linear):
 
