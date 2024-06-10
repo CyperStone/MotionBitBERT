@@ -2,7 +2,7 @@ import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from bitnet import BitLinear
+from lib.utils.bitnet import BitLinear
     
 class ActionHeadClassification(nn.Module):
     def __init__(self, dropout_ratio=0., dim_rep=512, num_classes=60, num_joints=17, hidden_dim=2048):
