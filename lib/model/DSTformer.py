@@ -8,7 +8,7 @@ from collections import OrderedDict
 from functools import partial
 from itertools import repeat
 from lib.model.drop import DropPath
-from bitnet import BitLinear
+from lib.utils.bitnet import BitLinear
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Cut & paste from PyTorch official master until it's in a few official releases - RW

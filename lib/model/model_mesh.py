@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 from lib.utils.utils_smpl import SMPL
 from lib.utils.utils_mesh import rotation_matrix_to_angle_axis, rot6d_to_rotmat
-from bitnet import BitLinear
+from lib.utils.bitnet import BitLinear
 
 class SMPLRegressor(nn.Module):
     def __init__(self, args, dim_rep=512, num_joints=17, hidden_dim=2048, dropout_ratio=0.):

@@ -25,6 +25,7 @@ from lib.data.dataset_motion_3d import MotionDataset3D
 from lib.data.augmentation import Augmenter2D
 from lib.data.datareader_h36m import DataReaderH36M  
 from lib.model.loss import *
+from lib.utils.bitnet import bitnet_quantization
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -378,6 +379,10 @@ def train_with_config(args, opts):
                 min_loss = e1
                 save_checkpoint(chk_path_best, epoch, lr, optimizer, model_pos, min_loss)
                 
+    print("SAVE QUANTIZED WEIGTHS")
+    with torch.no_grad():
+        bitnet_quantization(model_pos)
+
     if opts.evaluate:
         e1, e2, results_all = evaluate(args, model_pos, test_loader, datareader)
 
